@@ -54,7 +54,7 @@ OBJS=$(SRCS:.c=.o)
 DEPS=$(OBJS:.o=.d)
 
 # Object file subdirectories
-OBJDIRS=$(filter-out $(CURDIR)/, $(dir $(abspath $(OBJS))))
+OBJDIRS=$(filter-out $(CURDIR)/, $(sort $(dir $(abspath $(OBJS)))))
 $(OBJDIRS): ; @mkdir $@
 $(DEPS): | $(OBJDIRS)
 $(OBJS): | $(OBJDIRS)
