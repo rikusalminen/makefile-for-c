@@ -8,6 +8,14 @@ cscope.out.po
 tags
 TAGS
 
-test
+coverage
+coverage.info
+*.gcno
+*.gcda
+
+gmon.out
+gprof.out
+
+foo-test
 libfoo.a
 bar/libbar.a

@@ -7,12 +7,14 @@ CFLAGS+=-MMD  # generate dependency .d files
 LDLIBS=
 LDFLAGS=
 
-SRCS=test.c foo.c bar/bar.c
-TARGETS=test libfoo.a bar/libbar.a
+SRCS=foo-test.c foo.c bar/bar.c
+TARGETS=foo-test libfoo.a bar/libbar.a
 
 bar/libbar.a: bar/bar.o
 libfoo.a: foo.o
-test: test.o libfoo.a bar/libbar.a
+foo-test: foo-test.o libfoo.a bar/libbar.a
+
+TEST_SUITE=foo-test
 
 .DEFAULT_GOAL=all
 .PHONY: all
@@ -25,7 +27,22 @@ clean:
 	$(RM) $(DEPS)
 	$(RM) cscope.out cscope.out.in cscope.out.po
 	$(RM) tags TAGS
+ifeq ($(COVERAGE), 1)
+	$(RM) -r coverage
+	$(RM) coverage.info
+	$(RM) $(OBJS:.o=.gcno)
+	$(RM) $(OBJS:.o=.gcda)
+endif
+ifeq ($(PROFILE), 1)
+	$(RM) gmon.out
+	$(RM) gprof.out
+endif
+
 	-@rmdir $(OBJDIRS)
+
+.PHONY: test
+test: $(TEST_SUITE)
+	$(CURDIR)/$(TEST_SUITE)
 
 SRC_PATH ?= $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 vpath %.c $(SRC_PATH)src
@@ -58,3 +75,35 @@ tags: $(SRCS)
 # etags
 TAGS: $(SRCS)
 	etags -f $@ -R $(SRC_PATH)include $^
+
+# Profile (gprof)
+ifeq ($(PROFILE), 1)
+CFLAGS+=-pg
+LDFLAGS+=-pg
+
+gmon.out: test
+
+gprof.out: gmon.out
+	gprof $(CURDIR)/$(TEST_SUITE) > $@
+
+.PHONY: profile
+profile: gprof.out
+endif
+
+# Coverage (gcov, lcov)
+ifeq ($(COVERAGE), 1)
+CFLAGS+=-ftest-coverage -fprofile-arcs
+LDFLAGS+=-coverage
+LDLIBS+=-lgcov
+
+$(OBJS:.o=.gcda): test
+
+coverage.info: $(OBJS:.o=.gcda)
+	lcov --capture --directory $(CURDIR) --output-file $@
+
+coverage/index.html: coverage.info
+	genhtml -o coverage $<
+
+.PHONY: coverage
+coverage: coverage/index.html
+endif
