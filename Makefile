@@ -23,6 +23,8 @@ clean:
 	$(RM) $(TARGETS)
 	$(RM) $(OBJS)
 	$(RM) $(DEPS)
+	$(RM) cscope.out cscope.out.in cscope.out.po
+	$(RM) tags TAGS
 	-@rmdir $(OBJDIRS)
 
 SRC_PATH ?= $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
@@ -44,3 +46,15 @@ $(OBJS): | $(OBJDIRS)
 
 # implicit rules for building archives not parallel safe (e.g. make -j 3)
 %.a: ; ar rcs $@ $<
+
+# cscope.out
+cscope.out: $(SRCS)
+	cscope -f $@ -I$(SRC_PATH)include -bq $^
+
+# ctags
+tags: $(SRCS)
+	ctags -f $@ -R $(SRC_PATH)include $^
+
+# etags
+TAGS: $(SRCS)
+	etags -f $@ -R $(SRC_PATH)include $^

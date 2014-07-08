@@ -12,6 +12,7 @@ static libraries in C.
   * Uses vpath to locate source files
   * Safe for parallel make (make -jN)
   * make clean
+  * cscope, ctags and etags (optional)
 
 Usage
 ----
@@ -29,6 +30,10 @@ In the *end* of the file, list all targets and their dependencies.
 
 To build, run `make`.
 To build outside source directory, run `make -f path/to/Makefile`.
+
+For cscope run `make cscope.out`.
+For ctags run `make tags`.
+For etag run `make etags`.
 
 Issues
 ----

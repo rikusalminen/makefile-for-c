@@ -1,6 +1,13 @@
 build
 *.d
 *.o
+
+cscope.out
+cscope.out.in
+cscope.out.po
+tags
+TAGS
+
 test
 libfoo.a
 bar/libbar.a
