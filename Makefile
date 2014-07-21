@@ -7,18 +7,21 @@ CFLAGS+=-MMD  # generate dependency .d files
 LDLIBS=
 LDFLAGS=
 
-SRCS=foo-test.c foo.c bar/bar.c
-TARGETS=foo-test libfoo.a bar/libbar.a
+SRCS=src/foo-test.c src/foo.c src/bar/bar.c
+TARGETS=src/foo-test libfoo.a libbar.a
 
-bar/libbar.a: bar/bar.o
-libfoo.a: foo.o
-foo-test: foo-test.o libfoo.a bar/libbar.a
+libbar.a: src/bar/bar.o
+libfoo.a: src/foo.o
+src/foo-test: src/foo-test.o libfoo.a libbar.a
 
-TEST_SUITE=foo-test
+TEST_SUITE=src/foo-test
 
 .DEFAULT_GOAL=all
 .PHONY: all
 all: $(TARGETS)
+
+SRC_DIR ?= $(patsubst %/,%, $(dir $(abspath $(firstword $(MAKEFILE_LIST)))))
+CFLAGS+=-I$(SRC_DIR)/include
 
 .PHONY: clean
 clean:
@@ -37,27 +40,27 @@ ifeq ($(PROFILE), 1)
 	$(RM) gmon.out
 	$(RM) gprof.out
 endif
-
+ifneq ($(SRC_DIR), $(CURDIR))
 	-@rmdir $(OBJDIRS)
+endif
 
 .PHONY: test
 test: $(TEST_SUITE)
 	$(CURDIR)/$(TEST_SUITE)
 
-SRC_PATH ?= $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
-vpath %.c $(SRC_PATH)src
-vpath %.h $(SRC_PATH)include
-CFLAGS+=-I$(SRC_PATH)include
-
-#SRCS=$(notdir $(wildcard $(SRC_PATH)src/*.c))
+#SRCS=$(notdir $(wildcard $(SRC_DIR)src/*.c))
 OBJS=$(SRCS:.c=.o)
 DEPS=$(OBJS:.o=.d)
 
 # Object file subdirectories
+ifneq ($(SRC_DIR), $(CURDIR))
+vpath %.c $(SRC_DIR)
+
 OBJDIRS=$(filter-out $(CURDIR)/, $(sort $(dir $(abspath $(OBJS)))))
 $(OBJDIRS): ; @mkdir $@
 $(DEPS): | $(OBJDIRS)
 $(OBJS): | $(OBJDIRS)
+endif
 
 -include $(DEPS)
 
@@ -66,15 +69,15 @@ $(OBJS): | $(OBJDIRS)
 
 # cscope.out
 cscope.out: $(SRCS)
-	cscope -f $@ -I$(SRC_PATH)include -bq $^
+	cscope -f $@ -I$(SRC_DIR)/include -bq $^
 
 # ctags
 tags: $(SRCS)
-	ctags -f $@ -R $(SRC_PATH)include $^
+	ctags -f $@ -R $(SRC_DIR)/include $^
 
 # etags
 TAGS: $(SRCS)
-	etags -f $@ -R $(SRC_PATH)include $^
+	etags -f $@ -R $(SRC_DIR)/include $^
 
 # Profile (gprof)
 ifeq ($(PROFILE), 1)
@@ -99,7 +102,7 @@ LDLIBS+=-lgcov
 $(OBJS:.o=.gcda): test
 
 coverage.info: $(OBJS:.o=.gcda)
-	lcov --capture --directory $(CURDIR) --output-file $@
+	lcov --capture --base-directory $(SRC_DIR) --directory $(CURDIR) --output-file $@
 
 coverage/index.html: coverage.info
 	genhtml -o coverage $<

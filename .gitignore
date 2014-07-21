@@ -16,6 +16,6 @@ coverage.info
 gmon.out
 gprof.out
 
-foo-test
+src/foo-test
 libfoo.a
-bar/libbar.a
+libbar.a
