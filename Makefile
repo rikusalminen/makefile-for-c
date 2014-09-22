@@ -65,7 +65,7 @@ endif
 -include $(DEPS)
 
 # implicit rules for building archives not parallel safe (e.g. make -j 3)
-%.a: ; ar rcs $@ $<
+%.a: ; ar rcs $@ $^
 
 # cscope.out
 cscope.out: $(SRCS)
